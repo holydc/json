@@ -8,23 +8,57 @@
 #include <vector>
 
 namespace json {
+class NumberValue;
+class BooleanValue;
+class StringValue;
+class ObjectValue;
+class ArrayValue;
+
 class Value {
 public:
   Value() = default;
-  Value(int value);
-  Value(double value);
-  Value(const char *value);
-  Value(std::string value);
-  Value(bool value);
-  Value(std::initializer_list<std::unordered_map<std::string, Value>::value_type> values);
+  Value(const Value &ref);
+  Value(Value &&) = default;
 
-  std::string toString() const;
+  // number
+  Value(NumberValue value);
+  Value(double value);
+  Value(int value);
+  Value(unsigned int value);
+  Value(long value);
+  Value(unsigned long value);
+  Value(long long value);
+  Value(unsigned long long value);
+
+  // boolean
+  Value(BooleanValue value);
+  Value(bool value);
+
+  // string
+  Value(StringValue value);
+  Value(std::string value);
+  Value(const char *value);
+  Value(char value);
+
+  // object
+  Value(ObjectValue value);
+  Value(std::initializer_list<std::pair<const std::string, json::Value>> value);
+
+  // array
+  Value(ArrayValue value);
+
+  ~Value() = default;
+  Value &operator=(const Value &rhs);
+  Value &operator=(Value &&) = default;
+
+  std::string stringify() const;
 
 private:
   struct IValue {
     virtual ~IValue() = default;
 
-    virtual std::string toString() const = 0;
+    virtual std::string stringify() const = 0;
+    virtual Value make_value() const = 0;
   }; // struct IValue
 
   template<class ValueType>
@@ -32,8 +66,12 @@ private:
     ValueImpl(ValueType value) : value_(std::move(value)) {
     }
 
-    std::string toString() const override {
-      return value_.toString();
+    std::string stringify() const override {
+      return value_.stringify();
+    }
+
+    Value make_value() const override {
+      return value_.make_value();
     }
 
     ValueType value_;
@@ -42,49 +80,81 @@ private:
   std::shared_ptr<IValue> value_;
 }; // class Value
 
-class StringValue {
-public:
-  StringValue(const char *value);
-  StringValue(std::string value);
+template<class ValueType>
+struct ValueBase {
+  virtual ~ValueBase() = default;
 
-  std::string toString() const;
+  Value make_value() const {
+    return Value(*(static_cast<const ValueType *>(this)));
+  }
+}; // struct ValueBase
 
-private:
-  std::string value_;
-}; // class StringValue
-
-class NumberValue {
+class NumberValue : public ValueBase<NumberValue> {
 public:
   NumberValue(double value);
 
-  std::string toString() const;
+  std::string stringify() const;
 
 private:
   double value_;
 }; // class NumberValue
 
-class BooleanValue {
+class BooleanValue : public ValueBase<BooleanValue> {
 public:
   BooleanValue(bool value);
 
-  std::string toString() const;
+  std::string stringify() const;
 
 private:
   bool value_;
 }; // class BooleanValue
 
-class ObjectValue {
+class StringValue : public ValueBase<StringValue> {
 public:
-  ObjectValue(std::initializer_list<std::unordered_map<std::string, Value>::value_type> values);
+  StringValue() = default;
+  StringValue(const StringValue &) = default;
+  StringValue(StringValue &&) = default;
+  StringValue(std::string value);
+  StringValue(const char *value);
+  StringValue(char value);
+  ~StringValue() = default;
+  StringValue &operator=(const StringValue &) = default;
+  StringValue &operator=(StringValue &&) = default;
 
-  std::string toString() const;
+  std::string stringify() const;
+
+private:
+  std::string value_;
+}; // class StringValue
+
+class ObjectValue : public ValueBase<ObjectValue> {
+public:
+  ObjectValue() = default;
+  ObjectValue(const ObjectValue &) = default;
+  ObjectValue(ObjectValue &&) = default;
+  ObjectValue(std::initializer_list<std::pair<const std::string, json::Value>> value);
+  ~ObjectValue() = default;
+  ObjectValue &operator=(const ObjectValue &) = default;
+  ObjectValue &operator=(ObjectValue &&) = default;
+
+  std::string stringify() const;
 
 private:
   std::unordered_map<std::string, Value> value_;
 }; // class ObjectValue
 
-class ArrayValue {
+class ArrayValue : public ValueBase<ArrayValue> {
 public:
+  ArrayValue() = default;
+  ArrayValue(const ArrayValue &) = default;
+  ArrayValue(ArrayValue &&) = default;
+  explicit ArrayValue(std::initializer_list<Value> value);
+  ~ArrayValue() = default;
+  ArrayValue &operator=(const ArrayValue &) = default;
+  ArrayValue &operator=(ArrayValue &&) = default;
+
+  std::string stringify() const;
+
 private:
   std::vector<Value> value_;
 }; // class ArrayValue
