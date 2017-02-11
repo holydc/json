@@ -210,3 +210,9 @@ FakesAssemblies/
 GeneratedArtifacts/
 _Pvt_Extensions/
 ModelManifest.xml
+/json.VC.db
+/json.sln
+/lib/lib.vcxproj.filters
+/lib/lib.vcxproj
+/test/test.vcxproj.filters
+/test/test.vcxproj

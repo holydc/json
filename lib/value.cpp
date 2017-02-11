@@ -1,116 +1,64 @@
-#include "./value.h"
+#include "./include/Value.h"
 
-#include "./array.h"
-#include "./boolean.h"
-#include "./number.h"
-#include "./object.h"
-#include "./string.h"
+#include "./ArrayValue.h"
+#include "./BooleanValue.h"
+#include "./NullValue.h"
+#include "./NumberValue.h"
+#include "./ObjectValue.h"
+#include "./StringValue.h"
 
 namespace json {
-Value::Value(const Value &ref)
-  : value_(std::move(ref.value_->make_value().value_)) {
+Value Value::array(std::initializer_list<Value> value) {
+  return Value(std::vector<Value>(std::move(value)));
 }
 
-Value::Value(NumberValue value)
-  : value_(std::make_shared<ValueImpl<NumberValue>>(std::move(value))) {
+Value Value::array() {
+  return Value(std::vector<Value>());
 }
 
-Value::Value(double value)
-  : value_(std::make_shared<ValueImpl<NumberValue>>(value)) {
+Value Value::object(std::initializer_list<std::pair<const std::string, Value>> value) {
+  return Value(std::move(value));
 }
 
-Value::Value(int value)
-  : value_(std::make_shared<ValueImpl<NumberValue>>(static_cast<double>(value))) {
+Value Value::object() {
+  return Value(std::unordered_map<std::string, Value>());
 }
 
-Value::Value(unsigned int value)
-  : value_(std::make_shared<ValueImpl<NumberValue>>(static_cast<double>(value))) {
+Value::Value() : value_(std::make_shared<NullValue>()) {
 }
 
-Value::Value(long value)
-  : value_(std::make_shared<ValueImpl<NumberValue>>(static_cast<double>(value))) {
-}
-
-Value::Value(unsigned long value)
-  : value_(std::make_shared<ValueImpl<NumberValue>>(static_cast<double>(value))) {
-}
-
-Value::Value(long long value)
-  : value_(std::make_shared<ValueImpl<NumberValue>>(static_cast<double>(value))) {
-}
-
-Value::Value(unsigned long long value)
-  : value_(std::make_shared<ValueImpl<NumberValue>>(static_cast<double>(value))) {
-}
-
-Value::Value(BooleanValue value)
-  : value_(std::make_shared<ValueImpl<BooleanValue>>(std::move(value))) {
-}
-
-Value::Value(bool value)
-  : value_(std::make_shared<ValueImpl<BooleanValue>>(value)) {
-}
-
-Value::Value(StringValue value)
-  : value_(std::make_shared<ValueImpl<StringValue>>(std::move(value))) {
-}
-
-Value::Value(std::string value)
-  : value_(std::make_shared<ValueImpl<StringValue>>(std::move(value))) {
-}
-
-Value::Value(const char *value)
-  : value_(std::make_shared<ValueImpl<StringValue>>(value)) {
-}
-
-Value::Value(char value)
-  : value_(std::make_shared<ValueImpl<StringValue>>(value)) {
-}
-
-Value::Value(ObjectValue value)
-  : value_(std::make_shared<ValueImpl<ObjectValue>>(std::move(value))) {
-}
-
-Value::Value(std::initializer_list<std::pair<const std::string, json::Value>> value)
-  : value_(std::make_shared<ValueImpl<ObjectValue>>(std::move(value))) {
-}
-
-Value::Value(ArrayValue value)
-  : value_(std::make_shared<ValueImpl<ArrayValue>>(std::move(value))) {
+Value::Value(const Value &ref) : value_(std::move(ref.value_->clone().value_)) {
 }
 
 Value &Value::operator=(const Value &rhs) {
   return ((*this) = Value(rhs));
 }
 
+Value::Value(std::initializer_list<std::pair<const std::string, Value>> value) {
+  setValue(std::unordered_map<std::string, Value>(std::move(value)));
+}
+
 std::string Value::stringify() const {
-  if (value_ == nullptr) {
-    return "null";
-  }
   return value_->stringify();
 }
 
-bool Value::isNumber() const {
-  return value_->isNumber();
+void Value::setValue(std::vector<Value> value) {
+  value_ = std::make_shared<ArrayValue>(std::move(value));
 }
 
-bool Value::isBoolean() const {
-  return value_->isBoolean();
+void Value::setValue(bool value) {
+  value_ = std::make_shared<BooleanValue>(value);
 }
 
-bool Value::isString() const {
-  return value_->isString();
+void Value::setValue(double value) {
+  value_ = std::make_shared<NumberValue>(value);
 }
 
-bool Value::isObject() const {
-  return value_->isObject();
+void Value::setValue(std::unordered_map<std::string, Value> value) {
+  value_ = std::make_shared<ObjectValue>(std::move(value));
 }
 
-bool Value::isArray() const {
-  return value_->isArray();
-}
-
-Value make_array(std::initializer_list<Value> value) {
-  return ArrayValue(std::move(value));
+void Value::setValue(std::string value) {
+  value_ = std::make_shared<StringValue>(std::move(value));
 }
 } // namespace json

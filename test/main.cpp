@@ -1,26 +1,20 @@
 #include <iostream>
 
-#include "../lib/value.h"
-
-json::Value get() {
-  return {
-    { "number", 5566 },
-    { "object", {
-      { "boolean", true },
-      { "array", json::make_array({ false, "1", 2 }) }
-    } },
-    { "string", "Hello, world!" }
-  };
-}
+#include "../lib/include/json.h"
 
 int main() {
-  json::Value foo = get();
-  json::Value bar(foo);
-  std::cout << bar << std::endl;
-  std::cout << "isArray:" << std::boolalpha << bar.isArray() << std::endl;
-  std::cout << "isBoolean:" << std::boolalpha << bar.isBoolean() << std::endl;
-  std::cout << "isNumber:" << std::boolalpha << bar.isNumber() << std::endl;
-  std::cout << "isObject:" << std::boolalpha << bar.isObject() << std::endl;
-  std::cout << "isString:" << std::boolalpha << bar.isString() << std::endl;
+  json::Value json = {
+    {"description", "A simple JSON library in C++"},
+    {"version", 0.001},
+    {"free", true},
+    {"author", json::Value::array({
+      {
+        {"name", "holydc"},
+        {"email", "holydc@gmail.com"}
+      },
+      "And you :)"
+    })}
+  };
+  std::cout << json.stringify() << std::endl;
   return 0;
 }
